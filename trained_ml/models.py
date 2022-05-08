@@ -3,6 +3,8 @@ from insurance_ml.global_constants import TRAINING_STATUS, ML_MODEL_OPTIONS
 # Create your models here.
 
 class ModelTrainStatus(models.Model):
+    create_date = models.DateField(auto_now=True)
+    create_date = models.TimeField(auto_now=True)
     status = models.CharField(max_length=255, choices=TRAINING_STATUS)
     ml_model = models.CharField(max_length=255, choices=ML_MODEL_OPTIONS)
     rf_age = models.BooleanField(default=False)

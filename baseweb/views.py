@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.views.generic import View
 from insurance_ml.global_constants import ML_MODEL_OPTIONS, NUM_FIELDS, CAT_FIELDS
+from trained_ml.models import ModelTrainStatus
 # Create your views here.
 
 
@@ -25,4 +26,4 @@ class TrainAModel(View):
     def post(self, request):
         print(request.POST)
 
-        return HttpResponseRedirect
+        return HttpResponseRedirect("trained_models")

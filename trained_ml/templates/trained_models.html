@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+{% block content %}
+{% endblock content %}
+
+
+<div class="row">
+  <div class="col-xs-12 col-md-4">
+
+  </div>
+  <div class="col-xs-12 col-md-4">
+    <ul class="list-group-flush" id="displayTrainedModels">
+      </ul>
+  </div>
+  <div class="col-xs-12 col-md-4">
+
+  </div>
+</div>
+{% block tailscripts %}
+<script type="text/javascript" src="{% static 'js/trained_models.js' %}">
+
+</script>
+{% endblock tailscripts %}
