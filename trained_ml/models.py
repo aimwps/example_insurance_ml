@@ -1,7 +1,15 @@
 from django.db import models
-from insurance_ml.global_constants import TRAINING_STATUS
+from insurance_ml.global_constants import TRAINING_STATUS, ML_MODEL_OPTIONS
 # Create your models here.
 
-
-class TrainingStatus(models.Model):
+class ModelTrainStatus(models.Model):
     status = models.CharField(max_length=255, choices=TRAINING_STATUS)
+    ml_model = models.CharField(max_length=255, choices=ML_MODEL_OPTIONS)
+    rf_age = models.BooleanField(default=False)
+    rf_age = models.BooleanField(default=False)
+    rf_gender = models.BooleanField(default=False)
+    rf_bmi = models.BooleanField(default=False)
+    rf_children = models.BooleanField(default=False)
+    rf_is_smoker = models.BooleanField(default=False)
+    rf_region = models.BooleanField(default=False)
+    accuracy = models.FloatField(null=True, blank=True)
