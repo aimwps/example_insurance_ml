@@ -13,4 +13,6 @@ class TrainedModels(View):
 
 def GetModelStatusAjax(request):
     queryset = ModelTrainStatus.objects.all()
-    return JsonResponse(safe=False)
+    prepared_data = ModelTrainStatusSerializer(queryset, many=True)
+
+    return JsonResponse(prepared_data.data, safe=False)

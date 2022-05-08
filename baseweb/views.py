@@ -3,6 +3,7 @@ from django.views.generic import View
 from insurance_ml.global_constants import ML_MODEL_OPTIONS, NUM_FIELDS, CAT_FIELDS
 from trained_ml.models import ModelTrainStatus
 from trained_ml.tasks import train_model_from_db
+from trained_ml.serializers import ModelTrainStatusSerializer
 # Create your views here.
 
 
@@ -19,9 +20,12 @@ class TrainAModel(View):
 
     def get(self, request):
         context = {}
+
+        # Pass options for training a model to the web page
         context['ml_model_select'] = ML_MODEL_OPTIONS
         context['cat_field_select'] = CAT_FIELDS
         context['num_field_select'] = NUM_FIELDS
+
         return render(request, self.template_name, context)
 
     def post(self, request):
@@ -56,8 +60,9 @@ class TrainAModel(View):
         )
         new_training.save()
 
-        train_model_from_db.delay(new_training)
+        # Utilise Celery for running ML in background
+        serialized_data = ModelTrainStatusSerializer(new_training).data
+        train_model_from_db.delay(serialized_data)
 
-
-
+        # Move to trained models where user can see status of training
         return redirect("trained_models")
