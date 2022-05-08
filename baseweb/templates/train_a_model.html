@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<div class="container">
+  <h2>Train a model to predict medical insurance premiums</h2>
+
+  <div class="row">
+    <div class="col-xs-12 col-md-4">
+        <button type="button" class="btn btn-large w-100" name="selectMLModel"  data-bs-toggle="modal" data-bs-target="#modelModal">Select a model to train</button>
+        <ul class="list-group-flush mt-2 px-0 text-center" id="mlModelList">
+
+        </ul>
+
+    </div>
+    <div class="col-xs-12 col-md-4">
+      <button type="button" class="btn btn-large w-100" name="selectNumFields"  data-bs-toggle="modal" data-bs-target="#numericalModal">Select numerical fields</button>
+      <ul class="list-group-flush mt-2 px-0 text-center" id="numFieldsList">
+
+      </ul>
+
+    </div>
+    <div class="col-xs-12 col-md-4">
+      <button type="button" class="btn btn-large w-100" name="selectCatFields" data-bs-toggle="modal" data-bs-target="#categoricalModal">Select categorical fields</button>
+      <ul class="list-group-flush mt-2 px-0 text-center" id="catFieldsList">
+
+      </ul>
+    </div>
+
+  </div>
+  <div class="row">
+    <div class="col-xs-12 col-md-4">
+
+
+    </div>
+    <div class="col-xs-12 col-md-4">
+      <form class="" action="index.html" method="post">
+        {% csrf_token %}
+        <input type="hidden" class="MLInputs" name="modeltype" value="" id="model_type_input">
+        <input type="hidden" class="MLInputs" name="numerical" value="" id="numerical_inputs">
+        <input type="hidden" class="MLInputs" name="categorical" value="" id="categorical_inputs">
+        <button class="btn btn-lg disabled w-100" id="runTraining">Run training</button>
+      </form>
+    </div>
+    <div class="col-xs-12 col-md-4">
+
+    </div>
+
+  </div>
+</div>
+
+
+{% include 'model_modal.html' %}
+{% include 'numerical_modal.html' %}
+{% include 'categorical_modal.html' %}
+{% endblock content %}
+
+{% block tailscripts %}
+<script type="text/javascript" src="{% static 'js/training.js' %}"></script>
+{% endblock tailscripts %}
