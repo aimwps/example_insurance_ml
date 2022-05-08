@@ -6,8 +6,9 @@ class ModelTrainStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = ModelTrainStatus
         fields = (
-            # "create_date",
-            # "create_time",
+            "id",
+            "create_date",
+            "create_time",
             "status",
             "ml_model",
             "rf_age",

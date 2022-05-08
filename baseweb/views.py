@@ -17,7 +17,6 @@ from trained_ml.serializers import ModelTrainStatusSerializer
 class TrainAModel(View):
     template_name = "train_a_model.html"
 
-
     def get(self, request):
         context = {}
 

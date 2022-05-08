@@ -7,9 +7,9 @@ ML_MODEL_OPTIONS = (
                     ("Extra trees", "Extra trees"),
                     ("Random Forest", "Random Forest"),
                     ("HGB", "HGB"),
-                    ("Cat Boost", "Cat Boost"),
+                    #("Cat Boost", "Cat Boost"), - COMNING SOON
                     ("GBM", "GBM"),
-                    ("Light GBM", "Light GBM"),
+                    #("Light GBM", "Light GBM"), - COMING SOON
                     ("Ada Boost","Ada Boost"),
                     ("Super Vector Machine", "Super Vector Machine"),
                     ("SGD", "SGD"),
