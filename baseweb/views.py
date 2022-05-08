@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.views.generic import View
 from insurance_ml.global_constants import ML_MODEL_OPTIONS, NUM_FIELDS, CAT_FIELDS
 from trained_ml.models import ModelTrainStatus
+from trained_ml.tasks import train_model_from_db
 # Create your views here.
 
 
@@ -28,7 +29,7 @@ class TrainAModel(View):
         # gather data required from post request
         numerical_fields =  request.POST.getlist("numerical")
         categorical_fields = request.POST.getlist("categorical")
-        all_data_fields_set = numerical_fields.extend(categorical_fields)
+        all_data_fields_set = numerical_fields + categorical_fields
         ml_model = request.POST.get("modeltype")
 
         # generate fields names we are training data on (All contain 'rf_')
@@ -51,8 +52,12 @@ class TrainAModel(View):
                             rf_bmi = training_data_settings['rf_bmi'],
                             rf_children = training_data_settings['rf_children'],
                             rf_is_smoker = training_data_settings['rf_is_smoker'],
-                            rf_region =training_data_settings['rf_region'],
+                            rf_region = training_data_settings['rf_region'],
         )
         new_training.save()
+
+        train_model_from_db.delay(new_training)
+
+
 
         return redirect("trained_models")
