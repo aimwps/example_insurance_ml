@@ -30,8 +30,8 @@ class TrainAModel(View):
     def post(self, request):
 
         # gather data required from post request
-        numerical_fields =  request.POST.getlist("numerical")
-        categorical_fields = request.POST.getlist("categorical")
+        numerical_fields =  request.POST.get("numerical").split(",")
+        categorical_fields = request.POST.get("categorical").split(",")
         all_data_fields_set = numerical_fields + categorical_fields
         ml_model = request.POST.get("modeltype")
 
