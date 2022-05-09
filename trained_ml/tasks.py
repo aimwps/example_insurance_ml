@@ -1,63 +1,114 @@
 from celery                         import shared_task
 from insurance_ml.global_constants  import CAT_FIELDS, NUM_FIELDS
 from sklearn.tree                   import DecisionTreeRegressor
-from sklearn.ensemble               import ExtraTreesRegressor, AdaBoostRegressor, RandomForestRegressor, GradientBoostingRegressor
+from sklearn.ensemble               import ExtraTreesRegressor, AdaBoostRegressor, RandomForestRegressor, GradientBoostingRegressor, HistGradientBoostingRegressor
 from sklearn.neural_network         import MLPRegressor
 from sklearn.svm                    import SVR
 from sklearn.linear_model           import Ridge, Lasso, SGDRegressor, BayesianRidge
 from sklearn.neighbors              import KNeighborsRegressor, RadiusNeighborsRegressor
-from sklearn.experimental           import enable_hist_gradient_boosting
-from sklearn.ensemble               import HistGradientBoostingRegressor
-from sklearn.model_selection        import train_test_split
+from sklearn.model_selection        import train_test_split, GridSearchCV
 from sklearn                        import metrics, preprocessing, impute, compose, pipeline
+from catboost                       import CatBoostRegressor
+from lightgbm                       import LGBMRegressor
+from xgboost                        import XGBRegressor
 import pandas as pd
 import requests, json, time
-
-
+random_state = 894
 model_dict = {
-        'tree': {
-            "Decision Tree": DecisionTreeRegressor(),
-            "Extra trees": ExtraTreesRegressor(),
-            "Random Forest": RandomForestRegressor(),
-            "HGB": HistGradientBoostingRegressor(),
-            #"Cat Boost": CatBoostRegressor(verbose=0),
-            "GBM": GradientBoostingRegressor(),
-            #"Light GBM": LGBMRegressor(),
+        "tree": {
+            "decisiontree": DecisionTreeRegressor(random_state=random_state),
+            "extratrees": ExtraTreesRegressor(random_state=random_state),
+            "randomforest": RandomForestRegressor(random_state=random_state),
+            "hgb": HistGradientBoostingRegressor(random_state=random_state),
+            "catboost": CatBoostRegressor(verbose=0, random_state=random_state),
+            "gbm": GradientBoostingRegressor(random_state=random_state),
+            "lightgbm": LGBMRegressor(random_state=random_state),
+            "xgboost": XGBRegressor(random_state=random_state)
         },
-        'mult': {
-            "Ada Boost":AdaBoostRegressor(),
-            "Super Vector Machine": SVR(),
-            "SGD": SGDRegressor(),
-            "KNN": KNeighborsRegressor(),
+        "mult": {
+            "adaboost":AdaBoostRegressor(random_state=random_state),
+            "svm": SVR(),
+            "sgd": SGDRegressor(random_state=random_state),
+            "multilayerperceptron": MLPRegressor(random_state=random_state),
+            #"KNN": KNeighborsRegressor(),
         },
     }
 
+def train_model(data_df, prepro, training_settings, model_details):
+    # Extract name and model from arguments
+    ml_model_name = model_details[0]
+    ml_model = model_details[1]
 
-def train_model(data_df, prepro, training_settings, ml_model):
     #combine the model with preproccessing into a pipeline
-    training_pipeline = pipeline.make_pipeline(prepro, ml_model)
+    regression_pipe = pipeline.Pipeline(steps=[("prepro", prepro), (ml_model_name, ml_model)])
 
     # Split the data into traning and target
     X = data_df.drop("premium", axis=1)
-    Y = data_df['premium']
+    Y = data_df["premium"]
 
     # Split into a training and test set to judget model performance.
-    x_train, x_valid, y_train, y_valid = train_test_split(X, Y, test_size=0.2, random_state=894)
+    x_train, x_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=894)
 
     # Create a dataframe for storing the results
-    results = pd.DataFrame({'Model': [], 'MSE': [], 'RMSE': [], 'Time': []})
+    results = pd.DataFrame({"Model": [], "MSE": [], "RMSE": [], "Time": []})
 
-    # Being training
     start_time = time.time()
-    training_pipeline.fit(x_train, y_train)
-    preds = training_pipeline.predict(x_valid)
+
+
+
+    # Find the best parameters for the model
+    param_grid = [{
+                "decisiontree__criterion": ["squared_error", "friedman_mse", "absolute_error", "poisson"] ,
+                "extratrees__criterion":["squared_error","absolute_error",] ,
+                "randomforest__criterion": ["squared_error", "absolute_error", "poisson"] ,
+                "randomforest__n_estimators": [25, 50, 100, 150, 200, 250, 500] ,
+                "hgb__loss":["squared_error", "absolute_error",  "poisson"] ,
+                "hgb__learning_rate":[0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.009, 0.008, 0.007, 0.006, 0.005, 0.004, 0.003, 0.002, 0.001],
+                "hgb__min_samples_leaf":[12, 24, 36, 48],
+                "catboost__depth": [6,8,10],
+                "catboost__learning_rate": [0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.009, 0.008, 0.007, 0.006, 0.005, 0.004, 0.003, 0.002, 0.001],
+                "catboost__iterations": [25, 50, 100, 150, 200, 250, 500],
+                "gbm__criterion": ["friedman_mse", "squared_error", "mse", "mae"] ,
+                "gbm__n_estimators":[25, 50, 100, 150, 200, 250, 500],
+                "lightgbm__learning_rate": [0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.009, 0.008, 0.007, 0.006, 0.005, 0.004, 0.003, 0.002, 0.001],
+                "lightgbm__boosting": ["gbdt","rf", "dart", "goss"],
+                "adaboost__n_estimators": [25, 50, 100, 150, 200, 250, 500] ,
+                "adaboost__loss": ["linear", "square", "exponential"],
+                "adaboost__learning_rate": [0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.009, 0.008, 0.007, 0.006, 0.005, 0.004, 0.003, 0.002, 0.001],
+                "svm__C": [0.1,1, 10, 100],
+                "svm__kernel":['rbf', 'poly', 'sigmoid'],
+                "svm__gamma": [1,0.1,0.01,0.001]
+                # "sgd": [],
+                # "multilayerperceptron" :[] ,
+                }]
+
+    model_params = {}
+    for key, value in param_grid[0].items():
+        if f"{ml_model_name}__" in key:
+            model_params[key] = value
+
+    #param_grid = { key.split("__")[1] if f"{model_name}__" in key : value for key,value in param_grid }
+    grid_search = GridSearchCV(regression_pipe, param_grid=model_params, cv=2)
+    grid_search.fit(x_train, y_train)
+
+
+    # best_model = ml_model
+    regression_pipe_best = pipeline.Pipeline(steps=[("prepro", prepro), (ml_model_name, ml_model)]).set_params(**grid_search.best_params_)
+    regression_pipe_best.fit(x_train, y_train)
+
+    # Use the model to predict unseen data
+    preds = regression_pipe_best.predict(x_test)
+
+    # Calculate time it took to find best parameters and train model
     total_time = time.time() - start_time
 
-    results = results.append({"Model": training_settings["ml_model"],
-                              "MSE":   metrics.mean_squared_error(y_valid, preds, squared=True),
-                              "RMSE":  metrics.mean_squared_error(y_valid, preds, squared=False),
+    # Store results of the best para
+    results = results.append({"Model": ml_model_name,
+                              "MSE":   metrics.mean_squared_error(y_test, preds, squared=True),
+                              "RMSE":  metrics.mean_squared_error(y_test, preds, squared=False),
                               "Time":  total_time},
                               ignore_index=True)
+
     return results
 
 def get_data_from_api(training_settings):
@@ -91,7 +142,6 @@ def split_cat_num_vars(training_settings):
                 num_vars.append(key)
     return cat_vars, num_vars
 
-
 def build_tree_training(training_settings):
     """
     Applies preprocessing to tree and ensemble machine learning models.
@@ -100,19 +150,11 @@ def build_tree_training(training_settings):
     Returns a pipeline for preprocesing to be used with tree ML models.
     """
     cat_vars, num_vars = split_cat_num_vars(training_settings)
-    print(cat_vars)
-    print("----------")
-    print(num_vars)
-    # Apply any preprocessing required for tree models to number variables
-    tree_cat_var = pipeline.Pipeline(steps=[
-        ('ONEHOTENCODER', preprocessing.OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)),
-        ])
 
-    # Apply any preprocessing required for tree models to number variables
-    tree_prepro = compose.ColumnTransformer(transformers=[
-        ("TREE_CAT_VAR", tree_cat_var, cat_vars),
-        ], remainder='passthrough')
-
+    tree_prepro = compose.ColumnTransformer([
+        ("cat_var", preprocessing.OrdinalEncoder(handle_unknown = "error"), cat_vars),
+        ], remainder="drop")
+        # handle_unknown="use_encoded_value"
     return tree_prepro
 
 def build_mult_training(training_settings):
@@ -122,23 +164,11 @@ def build_mult_training(training_settings):
     Returns a pipeline for preprocesing to be used with multiplactive ML models.
     """
     cat_vars, num_vars = split_cat_num_vars(training_settings)
-
-
-    # Create pipeline for preprocessing numerical variables
-    mult_num_var = pipeline.Pipeline(steps=[
-        ('STANDARDSCALER',  preprocessing.StandardScaler()),
-        ])
-
-    # Create pipeline for preprocessing categorical variables
-    mult_cat_var = pipeline.Pipeline(steps=[
-        ('ONEHOTENCODER', preprocessing.OneHotEncoder(handle_unknown='ignore'))
-        ])
-
     # Combine pipeline
     mult_prepro = compose.ColumnTransformer(transformers=[
-        ("MULT_NUM_VAR", mult_num_var, num_vars),
-        ("MULT_CAT_VAR", mult_cat_var, cat_vars),
-        ], remainder='passthrough')
+        ("num_var", preprocessing.StandardScaler(), num_vars),
+        ("cat_var", preprocessing.OrdinalEncoder(handle_unknown = "error"), cat_vars),
+        ], remainder="drop")
 
     return mult_prepro
 
@@ -151,21 +181,23 @@ def train_model_from_db(training_settings):
     and the model to be later called for inference.
     """
     # Find if selected model is tree/ensemble based or multiplative
+    ml_model_name = training_settings["ml_model"]
 
-    if training_settings['ml_model'] in model_dict['tree']:
+    if ml_model_name in model_dict["tree"]:
         print("ITS A TREE MODEL")
-        ml_model = model_dict['tree'][training_settings['ml_model']]
+        ml_model = model_dict["tree"][ml_model_name]
         prepro = build_tree_training(training_settings)
-    elif training_settings['ml_model'] in model_dict['mult']:
+
+    elif ml_model_name in model_dict["mult"]:
         print("ITS A mult MODEL")
-        ml_model = model_dict['mult'][training_settings['ml_model']]
+        ml_model = model_dict["mult"][ml_model_name]
         prepro = build_mult_training(training_settings)
     else:
-        print("We didn't recognise the model type")
+        print(f"We didn't recognise the model type: {ml_model_name}")
 
     data = get_data_from_api(training_settings)
 
-    results = train_model(data, prepro, training_settings, ml_model)
+    results = train_model(data, prepro, training_settings, (ml_model_name, ml_model))
 
     print(results.head())
     return "success"

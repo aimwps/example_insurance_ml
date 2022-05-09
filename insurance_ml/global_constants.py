@@ -3,17 +3,19 @@ TRAINING_STATUS = (("training", "training"),
 
 
 ML_MODEL_OPTIONS = (
-                    ("Decision Tree","Decision Tree"),
-                    ("Extra trees", "Extra trees"),
-                    ("Random Forest", "Random Forest"),
-                    ("HGB", "HGB"),
-                    #("Cat Boost", "Cat Boost"), - COMNING SOON
-                    ("GBM", "GBM"),
-                    #("Light GBM", "Light GBM"), - COMING SOON
-                    ("Ada Boost","Ada Boost"),
-                    ("Super Vector Machine", "Super Vector Machine"),
-                    ("SGD", "SGD"),
-                    ("KNN", "KNN"),
+                    ("decisiontree","Decision Tree"),
+                    ("extratrees", "Extra trees"),
+                    ("randomforest", "Random Forest"),
+                    ("hgb", "HGB"),
+                    ("catboost", "Cat Boost"),
+                    ("gbm", "GBM"),
+                    ("lightgbm", "Light GBM"),
+                    ("adaboost","Ada Boost"),
+                    ("svm", "Super Vector Machine"),
+                    ("sgd", "SGD"),
+                    ("multilayerperceptron", "Multi Layer Perceptron"),
+                    ("xgboost", "Extreme Gradient Boost")
+                    #("KNN", "KNN"),
                 )
 NUM_FIELDS = (
             ("rf_age", "Age"),

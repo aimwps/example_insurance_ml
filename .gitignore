@@ -2,3 +2,4 @@
 staticfiles
 *.pyc
 *.sqlite3
+catboost_info
