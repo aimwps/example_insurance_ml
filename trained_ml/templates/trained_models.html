@@ -7,7 +7,8 @@
 <div class="container mt-4">
   <div class="row">
     <div class="d-flex flex-column col">
-      <ul class="list-group-flush px-0" id="displayTrainedModels">
+      {% csrf_token %}
+      <ul class="list-group px-0" id="displayTrainedModels">
         </ul>
     </div>
 

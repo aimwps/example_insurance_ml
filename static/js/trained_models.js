@@ -1,4 +1,19 @@
 $(document).ready(function(){
+    var questionTimeCounter = setInterval(getModelStatus, 5000);
+  function getBoolIcon(bool){
+    if(bool === true){
+      return `<i class="fa-solid fa-check"></i>`
+    } else {
+      return `<i class="fa-solid fa-xmark"></i>`
+    }
+  }
+  function nullCheck(item){
+    if(item){
+      return item;
+    } else {
+      return " --.--";
+    }
+  }
   function getModelStatus(){
     $.ajax({type:"GET",
             url: "/ajax_get_model_status/",
@@ -15,35 +30,35 @@ $(document).ready(function(){
             } else {
               $(json).each(function(i, model){
                 $("#displayTrainedModels").append(`
-                  <li class="list-group-item px-0">
-                    <button class="btn btn-link w-100" data-bs-toggle="collapse" href="#collapseModelInfo_${model.id}" role="button" aria-expanded="false" aria-controls="collapseModelInfo_${model.id}">
-                      Created a <strong>${model.ml_model}</strong> on ${model.create_date} @ ${model.create_time.slice(0, -10)} [STATUS: <strong>${model.status}</strong>]
-                    </button>
-                  <div class="collapse my-2" id="collapseModelInfo_${model.id}">
-                    <div class="card card-body">
-                      Model uses data:
-                      <ul class="list-group-flush">
-                        <li class="list-group-item">
-                          Age: ${model.rf_age}
-                        </li>
-                        <li class="list-group-item">
-                          BMI: ${model.rf_bmi}
-                        </li>
-                        <li class="list-group-item">
-                          Children: ${model.rf_children}
-                        </li>
-                        <li class="list-group-item">
-                          Is Smoker: ${model.rf_is_smoker}
-                        </li>
-                        <li class="list-group-item">
-                          Region: ${model.rf_region}
-                        </li>
-                        <li class="list-group-item">
-                          Gender: ${model.rf_gender}
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                  <li class="list-group-item px-2 my-2">
+                      <h4 class="p-2"><strong>${model.ml_model}</strong> on ${model.create_date} @ ${model.create_time.slice(0, -10)} </h4>
+                      <div class="container">
+                        <div class="row">
+                          <div class="col-xs-12 col-md-4">
+                          <h5>Training features</h5>
+                            Age: ${getBoolIcon(model.rf_age)} BMI: ${getBoolIcon(model.rf_bmi)} Children: ${getBoolIcon(model.rf_children)}<br>
+                            Is Smoker: ${getBoolIcon(model.rf_is_smoker)} Region: ${getBoolIcon(model.rf_region)}Gender: ${getBoolIcon(model.rf_gender)}
+                          </div>
+                          <div class="col-xs-12 col-md-3">
+                          <h5>Status<h5>
+                          <strong>${model.status}</strong>
+                          </div>
+                          <div class="col-xs-12 col-md-3">
+                          <h5>Result (RMSE)<h5>
+                          <strong>$${nullCheck(model.accuracy)}</strong>
+                          </div>
+                          <div class="col-xs-12 col-md-2">
+
+                          <a class="btn btn-sm w-100 mb-1" href="/inference/${model.id}" name="infermodel" id="infermodel_${model.id}">
+                            infer
+                          </a>
+                          <br>
+                          <button class="btn btn-sm w-100 mt-1" value="${model.id}" name="deletemodel" id="deletemodel_${model.id}">
+                            delete
+                          </button>
+                          </div>
+                          </div>
+                          </div>
                 </li>
                   `)
 
@@ -52,5 +67,23 @@ $(document).ready(function(){
 
   }})
 }
+
+  function deleteModelEntry(id){
+    $.ajax({
+      type: "post",
+      url: "/ajax_delete_model_training/",
+      datatype: "json",
+      data:{training_id : id,
+            csrfmiddlewaretoken:$('input[name=csrfmiddlewaretoken]').val(), },
+      success:function(){
+        getModelStatus()
+      }
+    })
+  }
   getModelStatus()
+  $(document).on("click", "button[name='deletemodel']", function(e){
+    e.preventDefault()
+    let id = $(this).val();
+    deleteModelEntry(id)
+  })
 })

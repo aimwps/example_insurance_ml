@@ -1,12 +1,9 @@
 from django.shortcuts import render, redirect
 from django.views.generic import View
-from insurance_ml.global_constants import ML_MODEL_OPTIONS, NUM_FIELDS, CAT_FIELDS
+from insurance_ml.constants import ML_MODEL_OPTIONS, NUM_FIELDS, CAT_FIELDS
 from trained_ml.models import ModelTrainStatus
 from trained_ml.tasks import train_model_from_db
 from trained_ml.serializers import ModelTrainStatusSerializer
-# Create your views here.
-
-
 
 ## User can select a machine learning model
 ## User can select data to train model on from API

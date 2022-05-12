@@ -3,3 +3,4 @@ staticfiles
 *.pyc
 *.sqlite3
 catboost_info
+model_data
