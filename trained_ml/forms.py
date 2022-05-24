@@ -1,5 +1,5 @@
 from django import forms
-
+from .models import ModelInference
 
 class ModelInferenceForm(forms.ModelForm):
     class Meta:
@@ -13,10 +13,10 @@ class ModelInferenceForm(forms.ModelForm):
                 "rf_region",
                 )
         widgets = {
-                "rf_age": forms.TextInput('class': 'form-control'),
-                "rf_gender": forms.Select('class': 'form-control'),
-                "rf_bmi", : forms.TextInput('class': 'form-control'),
-                "rf_children":forms.TextInput('class': 'form-control'),
-                "rf_is_smoker": forms.CheckboxInput('class': 'form-check-input'),
-                "rf_region": forms.Select('class': 'form-control'),
+                "rf_age": forms.TextInput(attrs={'class': 'form-control'}),
+                "rf_gender": forms.Select(attrs={'class': 'form-control'}),
+                "rf_bmi" : forms.TextInput(attrs={'class': 'form-control'}),
+                "rf_children":forms.TextInput(attrs={'class': 'form-control'}),
+                "rf_is_smoker": forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                "rf_region": forms.Select(attrs={'class': 'form-control'}),
         }

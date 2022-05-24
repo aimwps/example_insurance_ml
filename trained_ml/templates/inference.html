@@ -1,18 +1,78 @@
 {% extends 'base.html' %}
 {% load static %}
-
-
 {% block content %}
 
 <div class="container mt-4">
-
+<h4 class="text-center">Model Inference</h4>
+<input type="hidden" name="model_id" value="{{ model.id }}" id="modelId">
 <form method="post">
-  {{ form.as_p }}
+  {% csrf_token %}
+  {% if model.rf_age %}
+  <p class="mb-0">
+  <small>Age</small>
+  {{ form.rf_age }}
+  <br>
+  </p>
+  {% endif %}
+  {% if model.rf_gender %}
+  <p class="mb-0">
+  <small>Gender</small>
+  {{ form.rf_gender }}
+  <br>
+  </p>
+  {% endif %}
+  {% if model.rf_bmi %}
+  <p class="mb-0">
+  <small>BMI</small>
+  {{ form.rf_bmi }}
+  <br>
+  </p>
+  {% endif %}
+  {% if model.rf_children %}
+  <p class="mb-0">
+  <small>Children</small>
+  {{ form.rf_children }}
+  <br>
+  </p>
+  {% endif %}
+  {% if model.rf_region %}
+  <p class="mb-0">
+  <small>Location?</small>
+  {{ form.rf_region }}
+  <br>
+  </p>
+  {% endif %}
+  {% if model.rf_is_smoker %}
+  <p class="mb-0">
+  <small>Is a smoker?</small>
+  {{ form.rf_is_smoker }}
+  <br>
+  </p>
+  {% endif %}
+<div class="container">
+  <div class="row">
+    <div class="col-xs-12 col-md-4">
+
+    </div>
+    <div class="col-xs-12 col-md-4">
+      <button type="submit" class="btn btn-primary w-100">Predict premium</button>
+    </div>
+    <div class="col-xs-12 col-md-4">
+
+    </div>
+  </div>
+
+</div>
 
 </form>
-<h1> hello</h1>
+
+<h4 class="text-center mt-4">Previous Results</h4>
+<ul class="list-group" id="inferenceResults">
+  </ul>
 </div>
 {% endblock content %}
 {% block tailscripts %}
+<script type="text/javascript" src="{% static 'js/inference.js' %}">
 
+</script>
 {% endblock tailscripts %}

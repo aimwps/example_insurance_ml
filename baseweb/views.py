@@ -44,6 +44,7 @@ class TrainAModel(View):
             else:
                 training_data_settings[rf] = False
 
+
         # Create the new training record based on settings
         new_training = ModelTrainStatus(
                             ml_model = ml_model,
@@ -58,6 +59,7 @@ class TrainAModel(View):
 
         # Utilise Celery for running ML in background
         serialized_data = ModelTrainStatusSerializer(new_training).data
+        print(serialized_data)
         train_model_from_db.delay(serialized_data)
 
         # Move to trained models where user can see status of training

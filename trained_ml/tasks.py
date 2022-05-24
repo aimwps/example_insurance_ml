@@ -7,7 +7,15 @@ import requests
 import json
 import time
 from django.apps import apps
-import pickle
+import joblib
+
+def _ModelInference():
+    """
+    This allows updates to records avoiding circular imports.
+    As the task is imported to views, the model cannot be imported directly
+    into tasks. This function works around the circular import.
+    """
+    return apps.get_model('trained_ml', "ModelInference")
 
 def _ModelTrainStatus():
     """
@@ -18,6 +26,12 @@ def _ModelTrainStatus():
     return apps.get_model('trained_ml', "ModelTrainStatus")
 
 def train_model(data_df, prepro, training_settings, model_details):
+    """
+    Initiates the training of an ML model.
+    Finds the best parameters for that model.
+    Runs a final training to save the model for inference.
+    Returns the results in the form of RMSE from the model.
+    """
     # Extract name and model from arguments
     ml_model_name = model_details[0]
     ml_model = model_details[1]
@@ -56,12 +70,12 @@ def train_model(data_df, prepro, training_settings, model_details):
     # Save the mode
     id = training_settings['id']
     filename = f"model_data/{ml_model_name}_{id}"
-    pickle.dump(regression_pipe_best, open(filename, 'wb'))
+    joblib.dump(regression_pipe_best, filename)
 
     # Calculate time it took to find best parameters and train model
     total_time = time.time() - start_time
 
-    print(f"completed in {total_time}")
+
     # Store results of the best para
     results = results.append({"Model": ml_model_name,
                               "MSE":   metrics.mean_squared_error(y_test, preds, squared=True),
@@ -107,7 +121,6 @@ def get_data_from_api(training_settings):
 
     df = df[vars]
 
-    print(df.head())
     return df
 
 def build_tree_training(training_settings):
@@ -175,7 +188,47 @@ def train_model_from_db(training_settings):
     training_status.status = "complete"
     training_status.save()
 
-    print(type(training_status))
-
 
     return "success"
+
+
+@shared_task
+def run_inference(inference_settings):
+    training_settings = _ModelTrainStatus().objects.get(id=inference_settings['on_model'])
+
+    # Load the previously training model pipeline
+    file_loc = f"model_data/{training_settings.ml_model}_{training_settings.id}"
+    pipeline =  joblib.load(file_loc)
+
+    # Isolate the necessary data from the inference settings
+    model_required_data = {}
+
+    if training_settings.rf_age:
+        model_required_data['rf_age'] = [inference_settings["rf_age"]]
+
+    if training_settings.rf_gender:
+        model_required_data['rf_gender'] = [inference_settings["rf_gender"]]
+
+    if training_settings.rf_bmi:
+        model_required_data['rf_bmi'] = [inference_settings["rf_bmi"]]
+
+    if training_settings.rf_children:
+        model_required_data['rf_children'] = [inference_settings["rf_children"]]
+
+    if training_settings.rf_is_smoker:
+        model_required_data['rf_is_smoker'] = [inference_settings["rf_is_smoker"]]
+
+    if training_settings.rf_region:
+        model_required_data['rf_region'] = [inference_settings["rf_region"]]
+
+
+    # Add the collected data to a dataframe
+    df = pd.DataFrame(model_required_data)
+
+    # Use the loaded model to predict the data
+    results = pipeline.predict(df)
+
+    # Update the inference with the results
+    object = _ModelInference().objects.get(id=inference_settings['id'])
+    object.premium = results[0]
+    object.save()
